@@ -47,7 +47,6 @@ namespace FOVFix
 #pragma warning disable CS0618 // Type or member is obsolete
             SettingsTab.BindNumberSliderToSetting(____fov, gameSettings.FieldOfView, Plugin.MinBaseFOV.Value, Plugin.MaxBaseFOV.Value);
 #pragma warning restore CS0618 // Type or member is obsolete
-            Utils.DLog($"FovRangePatch: settings tab shown, min={Plugin.MinBaseFOV.Value} max={Plugin.MaxBaseFOV.Value}");
         }
     }
 
@@ -73,7 +72,6 @@ namespace FOVFix
                 Plugin.MaxBaseFOV.Value = 75;
             }
             __result = Mathf.Clamp(x, Plugin.MinBaseFOV.Value, Plugin.MaxBaseFOV.Value);
-            Utils.DLogThrottled("FovValuePatch", $"FovValuePatch: clamped setting x={x} -> {__result} (min={Plugin.MinBaseFOV.Value} max={Plugin.MaxBaseFOV.Value})", 2f);
         }
     }
 
@@ -257,11 +255,7 @@ namespace FOVFix
             Transform ____bone0, Transform ____bone1)
         {
             FirearmController firearmController = (FirearmController)_fcField.GetValue(__instance);
-            if (firearmController == null)
-            {
-                Utils.DLogThrottled("LerpCamera_earlyexit", "LerpCameraPatch: firearmController null -> falling back to VANILLA LerpCamera this frame", 0.5f);
-                return true;
-            }
+            if (firearmController == null) return true;
             Player player = (Player)_playerField.GetValue(firearmController);
             if (player != null && player.IsYourPlayer && firearmController.Weapon != null)
             {
@@ -358,11 +352,8 @@ namespace FOVFix
                 //this won't apply if doing the realism weapon to camera stuff, camera needs to be able to move to adjust to it
                 __instance.HandsContainer.CameraOffset = new Vector3(camXOffset, camYOffset, camZOffset); //no idea if I made up 0.04 or not.
 
-                Utils.DLogThrottled("LerpCamera_main", $"LerpCameraPatch: pose={__instance.Pose} leftStance={isDoingLeftShoulder} treatAsPistol={treatAsPistol} isOptic={isOptic} camZ={camZ:F3} targetZ={targetZ:F3} collisionSpeed={_collsionCameraSpeed:F2} aiming={__instance.IsAiming}", 0.5f);
-
                 return false;
             }
-            Utils.DLogThrottled("LerpCamera_earlyexit2", $"LerpCameraPatch: player null or not yours or Weapon null -> falling back to VANILLA LerpCamera this frame (playerNull={player == null} isYours={player?.IsYourPlayer} weaponNull={firearmController.Weapon == null})", 0.5f);
             return true;
         }
     }
@@ -400,8 +391,6 @@ namespace FOVFix
                 Plugin.FovController.WeapId = firearmController.Weapon.Id;
                 Plugin.FovController.CurrentWeapon = firearmController.Weapon;
                 Plugin.FovController.ChangeMainCamFOV();
-
-                Utils.DLog($"InitWeaponData fired (PwaWeaponParamsPatch): weapon={firearmController.Weapon.Name} isPistol={Plugin.FovController.IsPistol} pose={__instance.Pose}");
             }
         }
     }
@@ -444,13 +433,9 @@ namespace FOVFix
             {
                 ____ribcageScaleCompensated = scale;
                 UpdateRibcageScale(scale);
-
-                Utils.DLogThrottled("CalcScaleByFov", $"CalculateScaleValueByFovPatch: scale fix ON, scale={scale:F3} pose={__instance.ProceduralWeaponAnimation?.Pose}", 0.5f);
-
                 return false;
             }
 
-            Utils.DLogThrottled("CalcScaleByFov_passthrough", $"CalculateScaleValueByFovPatch: scale fix OFF, vanilla CalculateScaleValueByFov runs, pose={__instance.ProceduralWeaponAnimation?.Pose}", 0.5f);
             return true;
         }
     }

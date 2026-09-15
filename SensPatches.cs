@@ -33,7 +33,6 @@ namespace FOVFix
                 // FovPatches.cs, see its ported note on Singleton<SettingsManager>.
                 newSens = Singleton<SettingsManager>.Instance.Control.Settings.MouseAimingSensitivity * toggleZoomMulti * scopeFOVMulti;
                 ____aimingSens = newSens;
-                Utils.DLogThrottled("AimingSens", $"AimingSensitivityPatch: newSens={newSens:F3} toggleZoomMulti={toggleZoomMulti:F3} scopeFOVMulti={scopeFOVMulti:F3} isOptic={isOptic} isAiming={isAiming}", 1f);
             }
         }
     }

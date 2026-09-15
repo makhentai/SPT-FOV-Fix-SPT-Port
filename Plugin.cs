@@ -80,8 +80,6 @@ namespace FOVFix
         public static FovController FovController { get; set; }
         public static RealismCompat RealCompat { get; set; }
 
-        public static ConfigEntry<bool> DebugLogging { get; set; }
-
         private void Awake()
         {
             string adsFOV = "1. Player Camera ADS FOV";
@@ -90,9 +88,6 @@ namespace FOVFix
             string sens = "4. Mouse Sensitivity.";
             string cameraSpeed = "5. Camera Speed";
             string cameraSettings = "6. Camera Settings";
-            string debug = "..0. Debug";
-
-            DebugLogging = Config.Bind<bool>(debug, "Enable Debug Logging", false, new ConfigDescription("Logs FOV/camera/pose state changes to LogOutput.log for bug diagnosis. Off by default - turn on only if you need to investigate a new issue.", null, new ConfigurationManagerAttributes { Order = 700 }));
 
             GlobalADSMulti = Config.Bind<float>(adsFOV, "Optic FOV Multi", 1f, new ConfigDescription("Lower Multi = Lower FOV So More Zoom.", new AcceptableValueRange<float>(0.6f, 1.25f), new ConfigurationManagerAttributes { Order = 11 }));
             NonOpticFOVMulti = Config.Bind<float>(adsFOV, "Unmagnified Sight FOV Multi", 1f, new ConfigDescription("Lower Multi = Lower FOV So More Zoom.", new AcceptableValueRange<float>(0.6f, 1.25f), new ConfigurationManagerAttributes { Order = 10 }));

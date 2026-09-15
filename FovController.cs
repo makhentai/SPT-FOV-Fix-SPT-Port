@@ -76,18 +76,11 @@ namespace FOVFix
         public bool IsPistol { get; set; } = false;
         private bool _wasAiming = false;
 
-        // Debug-only state tracking for the crouch-FOV-glitch investigation.
-        private int _lastLoggedPose = int.MinValue;
-        private bool _lastLoggedSprint;
-        private bool _lastLoggedAiming;
-        private bool _lastLoggedFirstPerson;
-        private float _lastLoggedZoom = float.NaN;
-
-        public float ScrollCameraOffset 
+        public float ScrollCameraOffset
         {
             get 
             {
-                if (CurrentWeapon != null) 
+                if (CurrentWeapon != null)
                 {
                     string id;
                     if (Utils.IsInHideout)
@@ -95,6 +88,15 @@ namespace FOVFix
                         id = WeaponClassExtension.GetCustomProperty(CurrentWeapon);
                     }
                     else id = WeapId;
+
+                    // Bug fix (found via live testing): in the hideout shooting range,
+                    // GetCustomProperty(CurrentWeapon) returns null - nothing tags the range's
+                    // cloned test weapon with a custom property since CloneItemPatch was dropped
+                    // during the 4.1.3 port (see ported note on CloneItemPatch). Dictionary.TryGetValue
+                    // throws ArgumentNullException on a null key, and since this getter runs from
+                    // inside LerpCameraPatch's Prefix every frame while aiming, the exception silently
+                    // froze camera/hand positioning for the whole ADS hold in the hideout range.
+                    if (id == null) return 0f;
 
                     WeaponOffsets.TryGetValue(id, out float offset);
                     return offset;
@@ -159,16 +161,6 @@ namespace FOVFix
             float zoom = baseFOV * magnificationModifier * toggleZoomMulti;
             CameraManager.Instance.SetFov(zoom, 1f, !pwa.IsAiming);
             _wasAiming = pwa.IsAiming;
-
-            Utils.DLogThrottled("ChangeMainCamFOV", $"ChangeMainCamFOV: pose={pwa.Pose} sprint={pwa.Sprint} aiming={pwa.IsAiming} pov={pwa.PointOfView} leftStance={pwa.LeftStance} baseFOV={baseFOV:F2} magMod={magnificationModifier:F3} toggleZoomMulti={toggleZoomMulti:F3} zoom={zoom:F2} weapon={CurrentWeapon?.Name} isPistol={IsPistol} isToggleZoom={IsToggleZoom}", 0.5f);
-
-            // Spike detector: logs unconditionally (no throttle) the instant zoom jumps more than
-            // 3 degrees in a single call, so a one-frame glitch isn't hidden by the 0.5s throttle above.
-            if (!float.IsNaN(_lastLoggedZoom) && Mathf.Abs(zoom - _lastLoggedZoom) > 3f)
-            {
-                Utils.DLog($"!!! FOV SPIKE: {_lastLoggedZoom:F2} -> {zoom:F2} (delta={zoom - _lastLoggedZoom:F2}) pose={pwa.Pose} sprint={pwa.Sprint} aiming={pwa.IsAiming} weapon={CurrentWeapon?.Name}");
-            }
-            _lastLoggedZoom = zoom;
         }
 
         public bool IsPWANull()
@@ -271,37 +263,6 @@ namespace FOVFix
                 CheckScopeFOV();
                 CheckToggleZoom();
                 CheckScope();
-                LogStateChangesForDebug();
-            }
-        }
-
-        // Edge-triggered: fires the instant pose/sprint/aiming/view actually changes, so a crouch
-        // transition lands at an exact log line instead of being buried in the throttled per-frame log.
-        private void LogStateChangesForDebug()
-        {
-            if (IsPWANull()) return;
-            var pwa = _player.ProceduralWeaponAnimation;
-
-            if (pwa.Pose != _lastLoggedPose)
-            {
-                Utils.DLog($"POSE CHANGED: {_lastLoggedPose} -> {pwa.Pose} (aiming={pwa.IsAiming} sprint={pwa.Sprint} pov={pwa.PointOfView} weapon={CurrentWeapon?.Name})");
-                _lastLoggedPose = pwa.Pose;
-            }
-            if (pwa.Sprint != _lastLoggedSprint)
-            {
-                Utils.DLog($"SPRINT CHANGED: {_lastLoggedSprint} -> {pwa.Sprint} (pose={pwa.Pose} aiming={pwa.IsAiming})");
-                _lastLoggedSprint = pwa.Sprint;
-            }
-            if (pwa.IsAiming != _lastLoggedAiming)
-            {
-                Utils.DLog($"AIMING CHANGED: {_lastLoggedAiming} -> {pwa.IsAiming} (pose={pwa.Pose} sprint={pwa.Sprint})");
-                _lastLoggedAiming = pwa.IsAiming;
-            }
-            bool isFirstPerson = pwa.PointOfView == EPointOfView.FirstPerson;
-            if (isFirstPerson != _lastLoggedFirstPerson)
-            {
-                Utils.DLog($"POV CHANGED: firstPerson={isFirstPerson} (pose={pwa.Pose})");
-                _lastLoggedFirstPerson = isFirstPerson;
             }
         }
     }

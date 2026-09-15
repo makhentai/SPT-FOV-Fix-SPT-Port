@@ -9,31 +9,6 @@ namespace FOVFix
     {
         public static ManualLogSource Logger;
 
-        // Diagnostic logging for the crouch-FOV-glitch investigation. Gated on
-        // Plugin.DebugLogging so it can be switched off via the config once the bug is found.
-        // Uses LogWarning (not LogDebug) so it always lands in LogOutput.log regardless of the
-        // console's configured log level.
-        public static void DLog(string msg)
-        {
-            if (Plugin.DebugLogging != null && Plugin.DebugLogging.Value)
-            {
-                Logger.LogWarning($"[FOVFix DEBUG] {msg}");
-            }
-        }
-
-        private static readonly System.Collections.Generic.Dictionary<string, float> _lastLogTime = new System.Collections.Generic.Dictionary<string, float>();
-
-        // Same as DLog, but at most once every `interval` seconds per distinct `key` - for patches
-        // that fire every frame (LerpCamera, sensitivity getters, CalculateScaleValueByFov).
-        public static void DLogThrottled(string key, string msg, float interval = 1f)
-        {
-            if (Plugin.DebugLogging == null || !Plugin.DebugLogging.Value) return;
-            float now = UnityEngine.Time.unscaledTime;
-            if (_lastLogTime.TryGetValue(key, out float last) && now - last < interval) return;
-            _lastLogTime[key] = now;
-            Logger.LogWarning($"[FOVFix DEBUG] {msg}");
-        }
-
         public static string CompactCollimator = "55818acf4bdc2dde698b456b";
         public static string Collimator = "55818ad54bdc2ddc698b4569";
         public static string AssaultScope = "55818add4bdc2d5b648b456f";
